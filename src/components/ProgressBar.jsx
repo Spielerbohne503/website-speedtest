@@ -20,9 +20,12 @@ export default function ProgressBar({ language, done, total }) {
     <div className="card progress-card">
       <div className="progress-label">
         <span>
+          <span className="progress-globe" aria-hidden="true">
+            🌐
+          </span>{' '}
           {t(language, 'progressLabel')}: {done}/{total}
         </span>
-        <span>{percent}%</span>
+        <span className="progress-percent">{percent}%</span>
       </div>
       <div
         className="progress-track"
@@ -32,7 +35,9 @@ export default function ProgressBar({ language, done, total }) {
         aria-valuemax={100}
         aria-label={t(language, 'progressLabel')}
       >
-        <div className="progress-fill" style={{ width: `${percent}%` }} />
+        <div className="progress-fill" style={{ width: `${Math.max(3, percent)}%` }}>
+          <span className="progress-shimmer" aria-hidden="true" />
+        </div>
       </div>
       {elapsed > 45 && done < total && <p className="progress-hint">{t(language, 'progressSlow')}</p>}
     </div>

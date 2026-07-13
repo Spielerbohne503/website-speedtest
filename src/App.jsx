@@ -6,6 +6,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import TestForm from './components/TestForm';
 import ProgressBar from './components/ProgressBar';
+import StatTiles from './components/StatTiles';
+import SpeedChart from './components/SpeedChart';
 import ResultsTable from './components/ResultsTable';
 import ExportButtons from './components/ExportButtons';
 import { getLanguage, setLanguage, t } from './utils/i18n';
@@ -80,11 +82,17 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
+        <div className="hero-glow" aria-hidden="true" />
         <button type="button" className="lang-toggle" onClick={toggleLanguage} aria-label="Sprache wechseln / switch language">
           {t(language, 'langToggle')}
         </button>
         <h1>{t(language, 'appTitle')}</h1>
         <p>{t(language, 'appSubtitle')}</p>
+        <div className="hero-badges" aria-hidden="true">
+          <span>🌍 {t(language, 'badgeCountries')}</span>
+          <span>📡 {t(language, 'badgeReal')}</span>
+          <span>📄 {t(language, 'badgeExport')}</span>
+        </div>
       </header>
 
       <main className="app-main">
@@ -114,6 +122,8 @@ export default function App() {
 
         {results?.rows?.length > 0 && (
           <>
+            <StatTiles language={language} results={results} />
+            <SpeedChart language={language} results={results} />
             <ResultsTable language={language} results={results} />
             <ExportButtons language={language} results={results} onToast={setToast} />
           </>

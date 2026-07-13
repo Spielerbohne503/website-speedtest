@@ -112,8 +112,10 @@ export default function ResultsTable({ language, results }) {
                       </>
                     )}
                   </td>
-                  <td className={`cell-status status-${row.level}`}>
-                    {row.statusEmoji} {t(language, statusTextKey(row.level, hasData))}
+                  <td className="cell-status">
+                    <span className={`status-pill status-${row.level}`}>
+                      {row.statusEmoji} {t(language, statusTextKey(row.level, hasData))}
+                    </span>
                     <small>
                       {row.source === 'globalping'
                         ? `${t(language, 'sourceGlobalping')}${row.sourceCity ? ` (${row.sourceCity})` : ''}`

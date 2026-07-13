@@ -67,17 +67,27 @@ export default function TestForm({ language, disabled, onSubmit }) {
       <fieldset className="country-grid">
         <legend>{t(language, 'countriesLabel')}</legend>
         {COUNTRIES.map((c) => (
-          <label key={c.country} className="country-option">
+          <label
+            key={c.country}
+            className={`country-option${selected.has(c.country) ? ' is-selected' : ''}`}
+          >
             <input
               type="checkbox"
+              className="country-checkbox"
               checked={selected.has(c.country)}
               onChange={() => toggleCountry(c.country)}
               disabled={disabled}
               aria-label={`${countryName(language, c.country)} – ${cityName(language, c.country)}`}
             />
-            <span>
-              {c.flag} {countryName(language, c.country)}{' '}
-              <small>({cityName(language, c.country)})</small>
+            <span className="country-flag" aria-hidden="true">
+              {c.flag}
+            </span>
+            <span className="country-text">
+              {countryName(language, c.country)}
+              <small>{cityName(language, c.country)}</small>
+            </span>
+            <span className="country-check" aria-hidden="true">
+              ✓
             </span>
           </label>
         ))}
