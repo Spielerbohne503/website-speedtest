@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src functions scripts",
+    "lint": "eslint src functions worker scripts",
     "api": "node scripts/local-api.mjs",
     "deploy": "wrangler pages deploy ./dist"
   },

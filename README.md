@@ -84,25 +84,34 @@ Browser (React)
 }
 ```
 
-## Deployment (Cloudflare Pages)
+## Deployment (Cloudflare)
 
-### Option A – Git-Connect (empfohlen)
+### Option A – Workers Builds / Git-Connect (empfohlen)
 
-1. Repo zu GitHub pushen
-2. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
-3. Repo auswählen, Build-Einstellungen:
-   - **Build command:** `npm run build`
-   - **Build output directory:** `dist`
-4. Deploy — der Ordner `functions/` wird automatisch als Pages Functions erkannt, jeder Push deployed automatisch.
+1. Repo zu GitHub pushen (Branch `main`)
+2. [Cloudflare Dashboard](https://dash.cloudflare.com) → **Workers & Pages** → **Create** → **Import a repository**
+3. Repo auswählen — **Deploy command:** `npx wrangler deploy` (Standard) reicht:
+   der `[build]`-Block in `wrangler.toml` baut das Frontend automatisch vorher.
+4. Jeder Push auf `main` deployed automatisch. Der Worker-Name im Dashboard sollte
+   `website-speedtest` sein (sonst `name` in `wrangler.toml` anpassen).
+
+Das Projekt ist als **Worker mit statischen Assets** konfiguriert
+(`worker/index.js` routet `/api/speed-test`, alles andere kommt aus `dist/`).
 
 ### Option B – CLI
 
 ```bash
 npm install -g wrangler
 wrangler login
-npm run build
-wrangler pages deploy ./dist
+npx wrangler deploy        # baut automatisch (siehe [build] in wrangler.toml)
 ```
+
+### Option C – Cloudflare Pages (klassisch)
+
+Der Ordner `functions/` bleibt Pages-kompatibel: Pages-Projekt mit
+**Build command** `npm run build` und **Output directory** `dist` anlegen
+(dazu `main`/`[assets]` in `wrangler.toml` durch
+`pages_build_output_dir = "dist"` ersetzen).
 
 ### Custom Domain (optional)
 

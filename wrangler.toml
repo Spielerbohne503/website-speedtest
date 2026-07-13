@@ -1,9 +1,18 @@
-# Cloudflare Pages Konfiguration
-# Deployment: `wrangler pages deploy ./dist` oder Git-Connect im Dashboard.
-# Security-/CSP-Header liegen in public/_headers (Pages-Mechanismus für statische Header).
+# Cloudflare-Konfiguration: Worker mit statischen Assets.
+# Deploy: `npx wrangler deploy` (Workers Builds führt das automatisch aus;
+# der [build]-Block baut das Frontend vorher).
+# Security-/CSP-Header liegen in public/_headers und landen via Vite in dist/.
 name = "website-speedtest"
+main = "worker/index.js"
 compatibility_date = "2025-01-01"
-pages_build_output_dir = "dist"
+
+[build]
+command = "npm run build"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
 
 # Secrets (falls später benötigt) per CLI setzen, nie einchecken:
-#   wrangler pages secret put API_KEY
+#   wrangler secret put API_KEY
