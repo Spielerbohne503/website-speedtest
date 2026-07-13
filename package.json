@@ -1,0 +1,30 @@
+{
+  "name": "website-speedtest",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Website Speed Test – globale Ladezeiten-Messung (React + Cloudflare Pages)",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src functions scripts",
+    "api": "node scripts/local-api.mjs",
+    "deploy": "wrangler pages deploy ./dist"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "date-fns": "^3.6.0",
+    "jspdf": "^2.5.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.17.0",
+    "eslint-plugin-react": "^7.37.0",
+    "eslint-plugin-react-hooks": "^5.1.0",
+    "vite": "^5.4.11"
+  }
+}

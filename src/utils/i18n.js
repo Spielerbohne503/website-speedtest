@@ -1,0 +1,221 @@
+/**
+ * i18n – zweisprachiges Wörterbuch (DE = Standard, EN = Fallback).
+ * Sprache wird in localStorage('language') persistiert.
+ * Verwendung: t(lang, 'key', { platzhalter: wert })
+ */
+
+// Die 9 Testländer. `city` (englisch) ist der kanonische Wert für die API,
+// Anzeige-Namen kommen sprachabhängig aus cityNames/countryNames.
+export const COUNTRIES = [
+  { country: 'DE', city: 'Berlin', flag: '🇩🇪' },
+  { country: 'US', city: 'New York', flag: '🇺🇸' },
+  { country: 'GB', city: 'London', flag: '🇬🇧' },
+  { country: 'FR', city: 'Paris', flag: '🇫🇷' },
+  { country: 'NL', city: 'Amsterdam', flag: '🇳🇱' },
+  { country: 'ES', city: 'Madrid', flag: '🇪🇸' },
+  { country: 'IT', city: 'Milan', flag: '🇮🇹' },
+  { country: 'PL', city: 'Warsaw', flag: '🇵🇱' },
+  { country: 'JP', city: 'Tokyo', flag: '🇯🇵' },
+];
+
+const dict = {
+  de: {
+    appTitle: '⚡ Website Speed Test',
+    appSubtitle: 'Globale Ladezeiten-Messung aus 9 Ländern',
+    urlLabel: 'Zu testende URLs (eine pro Zeile)',
+    urlPlaceholder: 'https://example.com\nhttps://meine-website.de',
+    countriesLabel: 'Testländer',
+    repeatsLabel: 'Wiederholungen pro Land',
+    repeatsHint: '1–30 · Globalping nutzt max. 5 Probes pro Land',
+    startTest: 'Test starten',
+    testing: 'Tests laufen…',
+    progressLabel: 'Fortschritt',
+    progressSlow: 'Tests laufen länger als erwartet…',
+    colUrl: 'URL',
+    colCountry: 'Land',
+    colCity: 'Stadt',
+    colLoadTime: 'Ladezeit',
+    colStatus: 'Status',
+    colRecommendation: 'Empfehlung',
+    statusSuper: 'SUPER',
+    statusOk: 'OK',
+    statusSlow: 'LANGSAM',
+    statusError: 'FEHLER',
+    noData: 'Keine Daten verfügbar',
+    resultsTitle: 'Ergebnisse',
+    summary: 'Zusammenfassung',
+    testedAt: 'Getestet am',
+    exportPdf: '📄 PDF Export',
+    exportExcel: '📊 Excel Export',
+    exportCsv: '📋 CSV Export',
+    exportJson: '📎 JSON kopieren',
+    exportDone: 'Export erstellt',
+    copied: '✅ In Zwischenablage kopiert',
+    pdfFailed: '⚠️ PDF fehlgeschlagen, nutze Druckansicht',
+    excelFailed: '⚠️ Excel fehlgeschlagen, nutze CSV statt',
+    csvFailed: '⚠️ CSV fehlgeschlagen, JSON in Zwischenablage kopiert',
+    copyFailed: '❌ Kopieren fehlgeschlagen',
+    invalidUrl: 'URL ungültig: {url} – Versuche https://example.com',
+    noUrls: 'Bitte mindestens eine gültige URL eingeben',
+    noCountries: 'Bitte mindestens ein Land auswählen',
+    offline: '🔴 Offline – Tests nicht möglich',
+    retryOnline: 'Retry wenn online',
+    retry: 'Erneut versuchen',
+    partialErrors: '⚠️ {n} Kombination(en) fehlgeschlagen – restliche Ergebnisse werden angezeigt',
+    allFailed: 'Alle Tests fehlgeschlagen – bitte URLs und Verbindung prüfen',
+    errorGeneric: 'Unbekannter Fehler – Details im JSON-Export',
+    error404: 'URL nicht erreichbar',
+    error500: 'Server-Fehler, später erneut versuchen',
+    errorTimeout: 'Zeitüberschreitung – bitte erneut versuchen',
+    errorNetwork: 'Netzwerkfehler – bist du offline?',
+    sourceGlobalping: '🌍 Echte Messung',
+    sourceEdge: '⚡ Edge-Messung (Cloudflare)',
+    langToggle: '🇬🇧 English',
+    sheetSimple: 'Einfache Sprache',
+    sheetTech: 'Technical Data',
+    sheetRec: 'Empfehlungen',
+    rec_none: 'Nichts ändern',
+    rec_cdn: 'CDN aktivieren',
+    rec_server: 'Server upgraden',
+    rec_images: 'Bilder optimieren',
+    rec_unreachable: 'Erreichbarkeit prüfen (Server/DNS)',
+    footerNote: 'Messungen über Globalping-Probes; Fallback: Cloudflare Edge.',
+    countryNames: {
+      DE: 'Deutschland',
+      US: 'USA',
+      GB: 'Großbritannien',
+      FR: 'Frankreich',
+      NL: 'Niederlande',
+      ES: 'Spanien',
+      IT: 'Italien',
+      PL: 'Polen',
+      JP: 'Japan',
+    },
+    cityNames: {
+      DE: 'Berlin',
+      US: 'New York',
+      GB: 'London',
+      FR: 'Paris',
+      NL: 'Amsterdam',
+      ES: 'Madrid',
+      IT: 'Mailand',
+      PL: 'Warschau',
+      JP: 'Tokio',
+    },
+  },
+  en: {
+    appTitle: '⚡ Website Speed Test',
+    appSubtitle: 'Global load time measurement from 9 countries',
+    urlLabel: 'URLs to test (one per line)',
+    urlPlaceholder: 'https://example.com\nhttps://my-website.com',
+    countriesLabel: 'Test countries',
+    repeatsLabel: 'Repeats per country',
+    repeatsHint: '1–30 · Globalping uses max. 5 probes per country',
+    startTest: 'Start test',
+    testing: 'Running tests…',
+    progressLabel: 'Progress',
+    progressSlow: 'Tests are taking longer than expected…',
+    colUrl: 'URL',
+    colCountry: 'Country',
+    colCity: 'City',
+    colLoadTime: 'Load Time',
+    colStatus: 'Status',
+    colRecommendation: 'Recommendation',
+    statusSuper: 'GREAT',
+    statusOk: 'OK',
+    statusSlow: 'SLOW',
+    statusError: 'ERROR',
+    noData: 'No data available',
+    resultsTitle: 'Results',
+    summary: 'Summary',
+    testedAt: 'Tested at',
+    exportPdf: '📄 PDF Export',
+    exportExcel: '📊 Excel Export',
+    exportCsv: '📋 CSV Export',
+    exportJson: '📎 Copy JSON',
+    exportDone: 'Export created',
+    copied: '✅ Copied to clipboard',
+    pdfFailed: '⚠️ PDF failed, using print view',
+    excelFailed: '⚠️ Excel failed, using CSV instead',
+    csvFailed: '⚠️ CSV failed, JSON copied to clipboard',
+    copyFailed: '❌ Copy failed',
+    invalidUrl: 'Invalid URL: {url} – try https://example.com',
+    noUrls: 'Please enter at least one valid URL',
+    noCountries: 'Please select at least one country',
+    offline: '🔴 Offline – tests not possible',
+    retryOnline: 'Retry when online',
+    retry: 'Retry',
+    partialErrors: '⚠️ {n} combination(s) failed – showing remaining results',
+    allFailed: 'All tests failed – please check URLs and connection',
+    errorGeneric: 'Unknown error – see JSON export for details',
+    error404: 'URL not reachable',
+    error500: 'Server error, retry later',
+    errorTimeout: 'Timeout – please retry',
+    errorNetwork: 'Network error – are you offline?',
+    sourceGlobalping: '🌍 Real measurement',
+    sourceEdge: '⚡ Edge measurement (Cloudflare)',
+    langToggle: '🇩🇪 Deutsch',
+    sheetSimple: 'Simple Language',
+    sheetTech: 'Technical Data',
+    sheetRec: 'Recommendations',
+    rec_none: 'No changes needed',
+    rec_cdn: 'Enable CDN',
+    rec_server: 'Upgrade server',
+    rec_images: 'Optimize images',
+    rec_unreachable: 'Check availability (server/DNS)',
+    footerNote: 'Measured via Globalping probes; fallback: Cloudflare edge.',
+    countryNames: {
+      DE: 'Germany',
+      US: 'USA',
+      GB: 'United Kingdom',
+      FR: 'France',
+      NL: 'Netherlands',
+      ES: 'Spain',
+      IT: 'Italy',
+      PL: 'Poland',
+      JP: 'Japan',
+    },
+    cityNames: {
+      DE: 'Berlin',
+      US: 'New York',
+      GB: 'London',
+      FR: 'Paris',
+      NL: 'Amsterdam',
+      ES: 'Madrid',
+      IT: 'Milan',
+      PL: 'Warsaw',
+      JP: 'Tokyo',
+    },
+  },
+};
+
+export function getLanguage() {
+  try {
+    const stored = localStorage.getItem('language');
+    return stored === 'en' || stored === 'de' ? stored : 'de';
+  } catch {
+    return 'de';
+  }
+}
+
+export function setLanguage(lang) {
+  try {
+    localStorage.setItem('language', lang);
+  } catch {
+    // localStorage gesperrt (z.B. Private Mode) – Sprache gilt nur für die Session
+  }
+}
+
+export function t(lang, key, vars = {}) {
+  const entry = dict[lang]?.[key] ?? dict.de[key] ?? key;
+  if (typeof entry !== 'string') return entry;
+  return entry.replace(/\{(\w+)\}/g, (_, name) => String(vars[name] ?? `{${name}}`));
+}
+
+export function countryName(lang, code) {
+  return dict[lang]?.countryNames?.[code] ?? dict.de.countryNames[code] ?? code;
+}
+
+export function cityName(lang, code) {
+  return dict[lang]?.cityNames?.[code] ?? dict.de.cityNames[code] ?? '';
+}
