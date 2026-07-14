@@ -1503,6 +1503,27 @@ tbody tr:hover {
   color: var(--muted);
 }
 
+.unified-form .form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0;
+}
+
+.unified-form .form-row input[type='number'] {
+  width: 6rem;
+}
+
+.unified-row {
+  align-items: flex-end;
+}
+
+.unified-row .btn-primary {
+  margin-left: auto;
+}
+
 .audit-phase-strip {
   padding: 1rem 1.25rem;
 }

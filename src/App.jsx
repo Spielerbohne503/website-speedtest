@@ -1,10 +1,10 @@
 /**
- * App – zentrales State-Management.
- * State: results, loading, progress, language, error, online, toast.
- * Ablauf: TestForm → runSpeedTest (pro Kombination, mit Retry) → ResultsTable + Exporte.
+ * App – ein einziger Test misst alles: Länder-Speed, Crawl, Subdomains,
+ * Ressourcen, Sicherheit und Lighthouse/Core Web Vitals. Der Bericht zeigt
+ * alle Sektionen zusammen (wie ein voller PageSpeed-/WebPageTest-Report).
  */
 import { useCallback, useEffect, useState } from 'react';
-import TestForm from './components/TestForm';
+import UnifiedForm from './components/UnifiedForm';
 import RocketProgress from './components/RocketProgress';
 import StarField from './components/StarField';
 import StatTiles from './components/StatTiles';
@@ -12,21 +12,39 @@ import SpeedChart from './components/SpeedChart';
 import ResourceBreakdown from './components/ResourceBreakdown';
 import ResultsTable from './components/ResultsTable';
 import ExportButtons from './components/ExportButtons';
-import AuditView from './components/AuditView';
+import {
+  Overview,
+  Performance,
+  Recommendations,
+  ResourceTotals,
+  SecuritySection,
+  PagesSection,
+  SubdomainsSection,
+  ErrorsSection,
+  Limitations,
+} from './components/AuditReport';
 import { getLanguage, setLanguage, t } from './utils/i18n';
-import { runSpeedTest, isOnline, errorKey } from './api/client';
+import { runEverything } from './api/fulltest';
+import { isOnline } from './api/client';
 import './styles/App.css';
+
+const PHASE_LABEL = {
+  speed: 'phaseSpeed',
+  crawl: 'phaseCrawl',
+  subdomains: 'phaseSubdomains',
+  resources: 'phaseResources',
+  lighthouse: 'phaseLighthouse',
+};
 
 export default function App() {
   const [language, setLang] = useState(getLanguage);
-  const [results, setResults] = useState(null);
+  const [result, setResult] = useState(null); // { speed, audit }
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [progress, setProgress] = useState({ phase: 'speed', done: 0, total: 0 });
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [online, setOnline] = useState(isOnline());
-  const [lastRequest, setLastRequest] = useState(null);
-  const [mode, setMode] = useState('speed'); // 'speed' | 'audit'
+  const [lastOptions, setLastOptions] = useState(null);
 
   useEffect(() => {
     const goOnline = () => setOnline(true);
@@ -41,7 +59,7 @@ export default function App() {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 4000);
+    const timer = setTimeout(() => setToast(null), 4500);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -51,29 +69,29 @@ export default function App() {
     setLang(next);
   };
 
-  const handleTestSubmit = useCallback(
-    async (request) => {
+  const handleSubmit = useCallback(
+    async (options) => {
       if (!isOnline()) {
         setError(t(language, 'offline'));
         return;
       }
-      setLastRequest(request);
+      setLastOptions(options);
       setLoading(true);
       setError(null);
-      setResults(null);
+      setResult(null);
+      setProgress({ phase: 'speed', done: 0, total: 0 });
       try {
-        const res = await runSpeedTest(request.urls, request.proxies, request.repeats, (done, total) =>
-          setProgress({ done, total }),
+        const res = await runEverything(options, (phase, done, total) =>
+          setProgress({ phase, done, total }),
         );
-        setResults(res);
-        const okRows = res.rows.filter((row) => row.source !== 'error');
-        if (!okRows.length) {
-          setError(t(language, 'allFailed'));
-        } else if (res.errors.length) {
-          setToast(t(language, 'partialErrors', { n: res.errors.length }));
+        setResult(res);
+        if (!res.audit.pages.length && !res.speed?.rows?.length) {
+          setError(t(language, 'auditNoResults'));
+        } else if (res.audit.errors.some((e) => e.rateLimited)) {
+          setToast(t(language, 'lhUnavailable'));
         }
       } catch (err) {
-        setError(t(language, errorKey(err)));
+        setError(err.message);
       } finally {
         setLoading(false);
       }
@@ -81,7 +99,11 @@ export default function App() {
     [language],
   );
 
-  const handleRetry = () => lastRequest && handleTestSubmit(lastRequest);
+  const handleRetry = () => lastOptions && handleSubmit(lastOptions);
+
+  const speed = result?.speed;
+  const audit = result?.audit;
+  const hasResult = Boolean(audit?.pages?.length || speed?.rows?.length);
 
   return (
     <div className="app">
@@ -92,21 +114,11 @@ export default function App() {
           {t(language, 'langToggle')}
         </button>
         <h1>{t(language, 'appTitle')}</h1>
-        <p>{t(language, 'appSubtitle')}</p>
+        <p>{t(language, 'unifiedSub')}</p>
         <div className="hero-badges" aria-hidden="true">
           <span>🌍 {t(language, 'badgeCountries')}</span>
-          <span>📡 {t(language, 'badgeReal')}</span>
-          <span>📄 {t(language, 'badgeExport')}</span>
-        </div>
-        <div className="mode-switch" role="tablist">
-          <button type="button" role="tab" aria-selected={mode === 'speed'}
-            className={mode === 'speed' ? 'is-active' : ''} onClick={() => setMode('speed')}>
-            {t(language, 'modeSpeed')}
-          </button>
-          <button type="button" role="tab" aria-selected={mode === 'audit'}
-            className={mode === 'audit' ? 'is-active' : ''} onClick={() => setMode('audit')}>
-            {t(language, 'modeAudit')}
-          </button>
+          <span>🔬 Lighthouse</span>
+          <span>🖼️ {t(language, 'badgeExport')}</span>
         </div>
       </header>
 
@@ -114,48 +126,59 @@ export default function App() {
         {!online && (
           <div className="banner banner-danger" role="alert">
             <span>{t(language, 'offline')}</span>
-            <button type="button" onClick={handleRetry} disabled={!lastRequest}>
+            <button type="button" onClick={handleRetry} disabled={!lastOptions}>
               {t(language, 'retryOnline')}
             </button>
           </div>
         )}
 
-        {mode === 'audit' ? (
-          <AuditView language={language} onToast={setToast} />
-        ) : (
-          <>
-            <TestForm language={language} disabled={loading || !online} onSubmit={handleTestSubmit} />
+        <UnifiedForm language={language} disabled={loading || !online} onSubmit={handleSubmit} />
 
-            {loading && (
-              <RocketProgress
-                label={t(language, 'progressLabel')}
-                done={progress.done}
-                total={progress.total}
-                hint={t(language, 'progressSlow')}
-              />
+        {loading && (
+          <RocketProgress
+            label={t(language, PHASE_LABEL[progress.phase] ?? 'progressLabel')}
+            done={progress.done}
+            total={progress.total}
+            hint={t(language, 'progressSlow')}
+          />
+        )}
+
+        {error && (
+          <div className="banner banner-danger" role="alert">
+            <span>{error}</span>
+            {lastOptions && (
+              <button type="button" onClick={handleRetry}>
+                {t(language, 'retry')}
+              </button>
             )}
+          </div>
+        )}
 
-            {error && (
-              <div className="banner banner-danger" role="alert">
-                <span>{error}</span>
-                {lastRequest && (
-                  <button type="button" onClick={handleRetry}>
-                    {t(language, 'retry')}
-                  </button>
-                )}
-              </div>
-            )}
-
-            {results?.rows?.length > 0 && (
+        {hasResult && (
+          <div className="audit-report">
+            {audit && <Overview language={language} report={audit} />}
+            {audit && <Performance language={language} report={audit} />}
+            {speed?.rows?.length > 0 && (
               <>
-                <StatTiles language={language} results={results} />
-                <SpeedChart language={language} results={results} />
-                <ResourceBreakdown language={language} results={results} />
-                <ResultsTable language={language} results={results} />
-                <ExportButtons language={language} results={results} onToast={setToast} />
+                <StatTiles language={language} results={speed} />
+                <SpeedChart language={language} results={speed} />
               </>
             )}
-          </>
+            {audit && <Recommendations language={language} report={audit} />}
+            {speed?.resources?.length > 0 && <ResourceBreakdown language={language} results={speed} />}
+            {audit && <ResourceTotals language={language} report={audit} />}
+            {audit && <SecuritySection language={language} report={audit} />}
+            {audit && <PagesSection language={language} report={audit} />}
+            {audit && <SubdomainsSection language={language} report={audit} />}
+            {audit && <ErrorsSection language={language} report={audit} />}
+            {speed?.rows?.length > 0 && (
+              <>
+                <ResultsTable language={language} results={speed} />
+                <ExportButtons language={language} results={speed} onToast={setToast} />
+              </>
+            )}
+            {audit && <Limitations language={language} />}
+          </div>
         )}
       </main>
 

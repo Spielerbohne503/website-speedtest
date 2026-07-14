@@ -1,25 +1,15 @@
 /**
- * AuditView – vollständiger Website-Audit: Formular, mehrphasiger Fortschritt
- * und Bericht (Überblick, Empfehlungen, Performance/CWV, Ressourcen,
- * Sicherheit, gecrawlte Seiten, Subdomains, Fehler, Limitationen).
- * Props: language, onToast(message).
+ * AuditReport – alle Berichts-Sektionen des Website-Audits als
+ * wiederverwendbare Komponenten (Overview, Performance/Lighthouse + Filmstrip,
+ * Empfehlungen, Ressourcen, Sicherheit, Seiten, Subdomains, Fehler,
+ * Limitationen). Werden vom vereinten Test in der gewünschten Reihenfolge
+ * komponiert. Alle nehmen `report` (Ergebnis aus runAudit).
  */
-import { useState } from 'react';
 import { t } from '../utils/i18n';
-import { runAudit, isOnline } from '../api/audit';
 import { msToSeconds, formatBytes, formatMs } from '../utils/formatters';
-import RocketProgress from './RocketProgress';
 
-const PHASES = ['crawl', 'subdomains', 'resources', 'lighthouse'];
-const PHASE_LABEL = {
-  crawl: 'phaseCrawl',
-  subdomains: 'phaseSubdomains',
-  resources: 'phaseResources',
-  lighthouse: 'phaseLighthouse',
-};
-
-// Core-Web-Vitals-Schwellen (Google): [good, needs-improvement]
-const CWV = {
+// Core-Web-Vitals-Schwellen (Google): [good, needs-improvement, formatter]
+export const CWV = {
   lcp: [2500, 4000, (v) => msToSeconds(v)],
   fcp: [1800, 3000, (v) => msToSeconds(v)],
   cls: [0.1, 0.25, (v) => v.toFixed(3)],
@@ -40,140 +30,38 @@ function scoreLevel(score) {
   return score >= 90 ? 'success' : score >= 50 ? 'warning' : 'danger';
 }
 
-export default function AuditView({ language, onToast }) {
-  const [url, setUrl] = useState('');
-  const [crawlLimit, setCrawlLimit] = useState(50);
-  const [wantSubdomains, setWantSubdomains] = useState(true);
-  const [wantLighthouse, setWantLighthouse] = useState(true);
-  const [desktop, setDesktop] = useState(false);
-  const [lighthouseCount, setLighthouseCount] = useState(5);
-  const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState(null);
-  const [report, setReport] = useState(null);
-  const [error, setError] = useState(null);
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    const raw = url.trim();
-    const normalized = /^https?:\/\//i.test(raw) ? raw : `https://${raw}`;
-    let parsed;
-    try {
-      parsed = new URL(normalized);
-      if (!parsed.hostname.includes('.')) throw new Error();
-    } catch {
-      setError(t(language, 'invalidUrl', { url: raw }));
-      return;
-    }
-    if (!isOnline()) {
-      setError(t(language, 'offline'));
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setReport(null);
-    setProgress({ phase: 'crawl', done: 0, total: crawlLimit });
-    try {
-      const result = await runAudit(
-        { url: parsed.href, crawlLimit, wantSubdomains, wantLighthouse, lighthouseCount, desktop },
-        (phase, done, total) => setProgress({ phase, done, total }),
-      );
-      setReport(result);
-      if (!result.pages.length) setError(t(language, 'auditNoResults'));
-      const rl = result.errors.some((e) => e.rateLimited);
-      if (rl) onToast?.(t(language, 'lhUnavailable'));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-      setProgress(null);
-    }
-  };
-
-  return (
-    <>
-      <form className="card audit-form" onSubmit={handleSubmit}>
-        <h2 className="audit-form-title">{t(language, 'auditTitle')}</h2>
-        <label htmlFor="audit-url">{t(language, 'auditUrlLabel')}</label>
-        <input
-          id="audit-url"
-          type="text"
-          className="audit-url-input"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          placeholder="https://example.com"
-          disabled={loading}
-        />
-
-        <fieldset className="audit-options">
-          <legend>{t(language, 'auditOptions')}</legend>
-          <label className="audit-check">
-            <input type="checkbox" checked={wantSubdomains} onChange={(e) => setWantSubdomains(e.target.checked)} disabled={loading} />
-            {t(language, 'optSubdomains')}
-          </label>
-          <label className="audit-check">
-            <input type="checkbox" checked={wantLighthouse} onChange={(e) => setWantLighthouse(e.target.checked)} disabled={loading} />
-            {t(language, 'optLighthouse')}
-          </label>
-          <label className="audit-check">
-            <input type="checkbox" checked={desktop} onChange={(e) => setDesktop(e.target.checked)} disabled={loading || !wantLighthouse} />
-            {t(language, 'optDesktop')}
-          </label>
-        </fieldset>
-
-        <div className="form-row">
-          <label htmlFor="crawl-limit">
-            {t(language, 'auditCrawlLabel')}
-            <input id="crawl-limit" type="number" min={1} max={60} value={crawlLimit}
-              onChange={(e) => setCrawlLimit(Math.min(60, Math.max(1, Number(e.target.value) || 1)))} disabled={loading} />
-          </label>
-          <label htmlFor="lh-count">
-            {t(language, 'auditLhCount')}
-            <input id="lh-count" type="number" min={1} max={15} value={lighthouseCount}
-              onChange={(e) => setLighthouseCount(Math.min(15, Math.max(1, Number(e.target.value) || 1)))} disabled={loading || !wantLighthouse} />
-          </label>
-          <button type="submit" className="btn-primary" disabled={loading}>
-            {loading ? t(language, 'auditRunning') : t(language, 'auditStart')}
-          </button>
-        </div>
-
-        <p className="audit-hint">ℹ️ {t(language, 'auditNote')}</p>
-        {wantLighthouse && <p className="audit-hint">🔑 {t(language, 'psiKeyNote')}</p>}
-      </form>
-
-      {loading && progress && <AuditProgress language={language} progress={progress} />}
-      {error && <div className="banner banner-danger" role="alert"><span>{error}</span></div>}
-      {report && <AuditReport language={language} report={report} />}
-    </>
-  );
+function gradeAccent(grade) {
+  if (!grade) return null;
+  if (grade <= 'B') return 'success';
+  if (grade <= 'C') return 'warning';
+  return 'danger';
 }
 
-function AuditProgress({ language, progress }) {
-  const activeIndex = PHASES.indexOf(progress.phase);
-  return (
-    <>
-      <div className="card audit-phase-strip">
-        <div className="audit-phases">
-          {PHASES.map((phase, i) => (
-            <span key={phase} className={`audit-phase ${i < activeIndex ? 'is-done' : i === activeIndex ? 'is-active' : ''}`}>
-              {i < activeIndex ? '✓' : i === activeIndex ? '●' : '○'} {t(language, PHASE_LABEL[phase])}
-            </span>
-          ))}
-        </div>
-      </div>
-      <RocketProgress label={t(language, PHASE_LABEL[progress.phase])} done={progress.done} total={progress.total} />
-    </>
-  );
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function fieldStr(metric, unit = '') {
+  if (!metric) return '–';
+  return `${Math.round(metric.percentile)}${unit} (${metric.category ?? '?'})`;
 }
 
-function Overview({ language, report }) {
+function shortPath(url) {
+  try {
+    const u = new URL(url);
+    const path = u.pathname + u.search || '/';
+    return path.length > 60 ? path.slice(0, 57) + '…' : path;
+  } catch {
+    return url;
+  }
+}
+
+export function Overview({ language, report }) {
   const s = report.summary;
   const tiles = [
-    { label: t(language, 'ovPages'), value: s.pageCount, accent: null },
-    { label: t(language, 'ovSubdomains'), value: s.subdomainCount, accent: null },
+    { label: t(language, 'ovPages'), value: s.pageCount },
+    { label: t(language, 'ovSubdomains'), value: s.subdomainCount },
     { label: t(language, 'ovBroken'), value: s.brokenCount, accent: s.brokenCount > 0 ? 'danger' : 'success' },
     { label: t(language, 'ovPerf'), value: s.avgPerformance != null ? s.avgPerformance : '–', accent: scoreLevel(s.avgPerformance) === 'none' ? null : scoreLevel(s.avgPerformance) },
-    { label: t(language, 'ovWeight'), value: formatBytes(s.htmlPageCount ? s.totalBytes / s.htmlPageCount : 0, language), accent: null },
+    { label: t(language, 'ovWeight'), value: formatBytes(s.htmlPageCount ? s.totalBytes / s.htmlPageCount : 0, language) },
     { label: t(language, 'ovSecurity'), value: s.worstSecurityGrade ?? '–', accent: gradeAccent(s.worstSecurityGrade) },
   ];
   return (
@@ -188,14 +76,7 @@ function Overview({ language, report }) {
   );
 }
 
-function gradeAccent(grade) {
-  if (!grade) return null;
-  if (grade <= 'B') return 'success';
-  if (grade <= 'C') return 'warning';
-  return 'danger';
-}
-
-function Recommendations({ language, report }) {
+export function Recommendations({ language, report }) {
   const recs = report.summary.recommendations;
   if (!recs.length) return null;
   return (
@@ -214,9 +95,7 @@ function Recommendations({ language, report }) {
   );
 }
 
-const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-
-function Performance({ language, report }) {
+export function Performance({ language, report }) {
   if (!report.lighthouse.length) {
     return (
       <section className="card">
@@ -233,10 +112,10 @@ function Performance({ language, report }) {
           <p className="chart-url">{lh.url} · <strong>{lh.strategy}</strong></p>
           <PagePerformancePanel language={language} lh={lh} />
           <div className="lh-scores">
-            {Object.entries(lh.scores).map(([cat, score]) => (
-              <div key={cat} className={`lh-score lh-${scoreLevel(score)}`}>
+            {Object.entries(lh.scores).map(([catKey, score]) => (
+              <div key={catKey} className={`lh-score lh-${scoreLevel(score)}`}>
                 <span className="lh-score-num">{score ?? '–'}</span>
-                <span className="lh-score-cat">{cat.replace('-', ' ')}</span>
+                <span className="lh-score-cat">{catKey.replace('-', ' ')}</span>
               </div>
             ))}
           </div>
@@ -265,13 +144,7 @@ function Performance({ language, report }) {
   );
 }
 
-function fieldStr(metric, unit = '') {
-  if (!metric) return '–';
-  return `${Math.round(metric.percentile)}${unit} (${metric.category ?? '?'})`;
-}
-
-// WebPageTest-Stil "Page Performance": Metrik-Grid + Filmstrip.
-// Metriken kommen aus PageSpeed Insights (Lighthouse-Lauf).
+// WebPageTest-Stil "Page Performance": Metrik-Grid + Filmstrip (aus Lighthouse).
 function PagePerformancePanel({ language, lh }) {
   const pp = lh.pagePerf;
   if (!pp) return null;
@@ -316,13 +189,40 @@ function PagePerformancePanel({ language, lh }) {
   );
 }
 
-function SecuritySection({ language, report }) {
+export function ResourceTotals({ language, report }) {
+  const pages = report.perPage.filter((p) => p.resources);
+  if (!pages.length) return null;
+  const agg = { images: 0, css: 0, js: 0, bytes: 0, requests: 0 };
+  for (const p of pages) {
+    agg.bytes += p.resources.totals.bytes;
+    agg.requests += p.resources.totals.requests;
+    agg.images += p.resources.byType.images.bytes;
+    agg.css += p.resources.byType.css.bytes;
+    agg.js += p.resources.byType.js.bytes;
+  }
+  const cdns = [...new Set(pages.flatMap((p) => p.resources.insights?.cdnUsed ?? []))];
+  return (
+    <section className="card">
+      <h2>{t(language, 'secResources')}</h2>
+      <div className="res-summary">
+        <span className="res-chip"><strong>{formatBytes(agg.bytes, language)}</strong> {t(language, 'resWeight')}</span>
+        <span className="res-chip"><strong>{agg.requests}</strong> {t(language, 'resRequests')}</span>
+        <span className="res-chip">🖼️ <strong>{formatBytes(agg.images, language)}</strong></span>
+        <span className="res-chip">🎨 <strong>{formatBytes(agg.css, language)}</strong></span>
+        <span className="res-chip">⚙️ <strong>{formatBytes(agg.js, language)}</strong></span>
+        {cdns.length > 0 && <span className="res-chip">☁️ {cdns.join(', ')}</span>}
+      </div>
+    </section>
+  );
+}
+
+export function SecuritySection({ language, report }) {
   const pages = report.perPage.filter((p) => p.security);
   if (!pages.length) return null;
   return (
     <section className="card">
       <h2>{t(language, 'secSecurity')}</h2>
-      <div className="table-wrap">
+      <div className="table-wrap audit-scroll">
         <table>
           <thead>
             <tr>
@@ -357,7 +257,7 @@ function SecuritySection({ language, report }) {
   );
 }
 
-function PagesSection({ language, report }) {
+export function PagesSection({ language, report }) {
   return (
     <section className="card">
       <h2>{t(language, 'secPages')} <small className="results-meta">({report.pages.length})</small></h2>
@@ -387,7 +287,7 @@ function PagesSection({ language, report }) {
   );
 }
 
-function SubdomainsSection({ language, report }) {
+export function SubdomainsSection({ language, report }) {
   const sub = report.subdomains;
   if (!sub?.subdomains?.length) return null;
   const reachable = sub.subdomains.filter((s) => s.status && s.status > 0 && s.status < 400).length;
@@ -418,7 +318,7 @@ function SubdomainsSection({ language, report }) {
   );
 }
 
-function ErrorsSection({ language, report }) {
+export function ErrorsSection({ language, report }) {
   if (!report.errors.length) return null;
   return (
     <section className="card">
@@ -432,58 +332,11 @@ function ErrorsSection({ language, report }) {
   );
 }
 
-function shortPath(url) {
-  try {
-    const u = new URL(url);
-    const path = (u.pathname + u.search) || '/';
-    return path.length > 60 ? path.slice(0, 57) + '…' : path;
-  } catch {
-    return url;
-  }
-}
-
-function AuditReport({ language, report }) {
+export function Limitations({ language }) {
   return (
-    <div className="audit-report">
-      <Overview language={language} report={report} />
-      <Recommendations language={language} report={report} />
-      <Performance language={language} report={report} />
-      <ResourceTotals language={language} report={report} />
-      <SecuritySection language={language} report={report} />
-      <PagesSection language={language} report={report} />
-      <SubdomainsSection language={language} report={report} />
-      <ErrorsSection language={language} report={report} />
-      <section className="card limitations">
-        <h3>ℹ️ {t(language, 'limitationsTitle')}</h3>
-        <p>{t(language, 'limitationsBody')}</p>
-      </section>
-    </div>
-  );
-}
-
-function ResourceTotals({ language, report }) {
-  const pages = report.perPage.filter((p) => p.resources);
-  if (!pages.length) return null;
-  const agg = { images: 0, css: 0, js: 0, bytes: 0, requests: 0 };
-  for (const p of pages) {
-    agg.bytes += p.resources.totals.bytes;
-    agg.requests += p.resources.totals.requests;
-    agg.images += p.resources.byType.images.bytes;
-    agg.css += p.resources.byType.css.bytes;
-    agg.js += p.resources.byType.js.bytes;
-  }
-  const cdns = [...new Set(pages.flatMap((p) => p.resources.insights?.cdnUsed ?? []))];
-  return (
-    <section className="card">
-      <h2>{t(language, 'secResources')}</h2>
-      <div className="res-summary">
-        <span className="res-chip"><strong>{formatBytes(agg.bytes, language)}</strong> {t(language, 'resWeight')}</span>
-        <span className="res-chip"><strong>{agg.requests}</strong> {t(language, 'resRequests')}</span>
-        <span className="res-chip">🖼️ <strong>{formatBytes(agg.images, language)}</strong></span>
-        <span className="res-chip">🎨 <strong>{formatBytes(agg.css, language)}</strong></span>
-        <span className="res-chip">⚙️ <strong>{formatBytes(agg.js, language)}</strong></span>
-        {cdns.length > 0 && <span className="res-chip">☁️ {cdns.join(', ')}</span>}
-      </div>
+    <section className="card limitations">
+      <h3>ℹ️ {t(language, 'limitationsTitle')}</h3>
+      <p>{t(language, 'limitationsBody')}</p>
     </section>
   );
 }
