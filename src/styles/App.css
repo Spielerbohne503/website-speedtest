@@ -1136,6 +1136,454 @@ tbody tr:hover {
   padding: 1.5rem 1rem;
 }
 
+/* ---------- Modus-Umschalter ---------- */
+
+.mode-switch {
+  position: relative;
+  display: inline-flex;
+  gap: 0.25rem;
+  margin-top: 1.3rem;
+  padding: 0.28rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  backdrop-filter: blur(6px);
+}
+
+.mode-switch button {
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0.45rem 1.1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.mode-switch button.is-active {
+  background: #fff;
+  color: var(--primary);
+}
+
+/* ---------- Audit-Formular ---------- */
+
+.audit-form-title {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+  letter-spacing: -0.01em;
+}
+
+.audit-url-input {
+  width: 100%;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 1rem;
+  margin-bottom: 1.1rem;
+  background: #fbfcfe;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.audit-url-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+.audit-options {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.85rem 1rem 1rem;
+  margin: 0 0 1.1rem;
+}
+
+.audit-options legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  padding: 0 0.4rem;
+}
+
+.audit-check {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.audit-form .form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.audit-form .form-row input[type='number'] {
+  width: 6rem;
+}
+
+.audit-hint {
+  margin: 0.6rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted);
+}
+
+/* ---------- Audit-Fortschritt (Phasen) ---------- */
+
+.audit-phases {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.2rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.audit-phase {
+  color: var(--muted);
+}
+
+.audit-phase.is-done {
+  color: var(--success-ink);
+}
+
+.audit-phase.is-active {
+  color: var(--primary);
+  font-weight: 650;
+}
+
+/* ---------- Audit-Bericht ---------- */
+
+.audit-report > * {
+  animation: fadeUp 0.5s var(--ease-out) both;
+}
+
+.audit-tiles {
+  grid-template-columns: repeat(6, 1fr);
+}
+
+.rec-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rec-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border-left: 3px solid var(--border);
+  background: #fbfcfe;
+}
+
+.rec-item.rec-high {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.rec-item.rec-medium {
+  border-left-color: var(--warning);
+  background: var(--warning-soft);
+}
+
+.rec-item.rec-low {
+  border-left-color: var(--primary);
+}
+
+.rec-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.rec-badge-high {
+  background: var(--danger);
+  color: #fff;
+}
+
+.rec-badge-medium {
+  background: var(--warning);
+  color: #3a2a05;
+}
+
+.rec-badge-low {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.rec-text {
+  flex: 1;
+  min-width: 200px;
+  font-size: 0.9rem;
+}
+
+.rec-gain {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---------- Lighthouse-Scores + Core Web Vitals ---------- */
+
+.lh-block {
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+}
+
+.lh-block:first-of-type {
+  border-top: none;
+  padding-top: 0.5rem;
+}
+
+.lh-scores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.8rem 0;
+}
+
+.lh-score {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 88px;
+  padding: 0.6rem 0.9rem;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+}
+
+.lh-score-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.lh-score-cat {
+  font-size: 0.72rem;
+  text-transform: capitalize;
+  color: var(--ink-2);
+}
+
+.lh-success {
+  border-color: var(--success);
+}
+.lh-success .lh-score-num {
+  color: var(--success-ink);
+}
+.lh-warning {
+  border-color: var(--warning);
+}
+.lh-warning .lh-score-num {
+  color: var(--warning-ink);
+}
+.lh-danger {
+  border-color: var(--danger);
+}
+.lh-danger .lh-score-num {
+  color: var(--danger-ink);
+}
+
+.cwv-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin: 0.8rem 0;
+}
+
+.cwv-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: #f8fafd;
+  border-left: 3px solid var(--border);
+}
+
+.cwv-cell.cwv-success {
+  border-left-color: var(--success);
+}
+.cwv-cell.cwv-warning {
+  border-left-color: var(--warning);
+}
+.cwv-cell.cwv-danger {
+  border-left-color: var(--danger);
+}
+
+.cwv-name {
+  font-size: 0.72rem;
+  color: var(--ink-2);
+}
+
+.cwv-val {
+  font-size: 1rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.cwv-field {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+
+/* ---------- Page Performance (WebPageTest-Stil) ---------- */
+
+.pp-panel {
+  margin: 0.8rem 0 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfcfe;
+}
+
+.pp-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.6rem;
+}
+
+.pp-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: var(--card);
+  border-bottom: 3px solid var(--border);
+}
+
+.pp-cell.pp-success {
+  border-bottom-color: var(--success);
+}
+.pp-cell.pp-warning {
+  border-bottom-color: var(--warning);
+}
+.pp-cell.pp-danger {
+  border-bottom-color: var(--danger);
+}
+
+.pp-label {
+  font-size: 0.68rem;
+  color: var(--muted);
+  line-height: 1.25;
+}
+
+.pp-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.pp-success .pp-value {
+  color: var(--success-ink);
+}
+.pp-warning .pp-value {
+  color: var(--warning-ink);
+}
+.pp-danger .pp-value {
+  color: var(--danger-ink);
+}
+
+.pp-filmstrip-wrap {
+  margin-top: 1rem;
+}
+
+.pp-filmstrip-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.pp-filmstrip {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding: 0.6rem 0 0.2rem;
+  scroll-snap-type: x proximity;
+}
+
+.pp-frame {
+  margin: 0;
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  text-align: center;
+}
+
+.pp-frame img {
+  width: 110px;
+  height: auto;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: #fff;
+  display: block;
+}
+
+.pp-frame figcaption {
+  margin-top: 0.25rem;
+  font-size: 0.72rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Fehlerliste ---------- */
+
+.err-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.err-list li {
+  color: var(--ink-2);
+}
+
+.err-phase {
+  display: inline-block;
+  min-width: 84px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.audit-scroll {
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.limitations {
+  background: #f8fafd;
+}
+
+.limitations h3 {
+  margin: 0 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.limitations p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1200px) {
@@ -1202,6 +1650,31 @@ tbody tr:hover {
 
   .res-slowest .res-file-bar {
     display: none;
+  }
+
+  .audit-tiles {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .cwv-grid,
+  .pp-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .mode-switch button {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.82rem;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+  .audit-tiles {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .cwv-grid,
+  .pp-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 
   body {

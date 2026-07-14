@@ -11,6 +11,7 @@ import SpeedChart from './components/SpeedChart';
 import ResourceBreakdown from './components/ResourceBreakdown';
 import ResultsTable from './components/ResultsTable';
 import ExportButtons from './components/ExportButtons';
+import AuditView from './components/AuditView';
 import { getLanguage, setLanguage, t } from './utils/i18n';
 import { runSpeedTest, isOnline, errorKey } from './api/client';
 import './styles/App.css';
@@ -24,6 +25,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [online, setOnline] = useState(isOnline());
   const [lastRequest, setLastRequest] = useState(null);
+  const [mode, setMode] = useState('speed'); // 'speed' | 'audit'
 
   useEffect(() => {
     const goOnline = () => setOnline(true);
@@ -94,6 +96,16 @@ export default function App() {
           <span>📡 {t(language, 'badgeReal')}</span>
           <span>📄 {t(language, 'badgeExport')}</span>
         </div>
+        <div className="mode-switch" role="tablist">
+          <button type="button" role="tab" aria-selected={mode === 'speed'}
+            className={mode === 'speed' ? 'is-active' : ''} onClick={() => setMode('speed')}>
+            {t(language, 'modeSpeed')}
+          </button>
+          <button type="button" role="tab" aria-selected={mode === 'audit'}
+            className={mode === 'audit' ? 'is-active' : ''} onClick={() => setMode('audit')}>
+            {t(language, 'modeAudit')}
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
@@ -106,28 +118,34 @@ export default function App() {
           </div>
         )}
 
-        <TestForm language={language} disabled={loading || !online} onSubmit={handleTestSubmit} />
-
-        {loading && <ProgressBar language={language} done={progress.done} total={progress.total} />}
-
-        {error && (
-          <div className="banner banner-danger" role="alert">
-            <span>{error}</span>
-            {lastRequest && (
-              <button type="button" onClick={handleRetry}>
-                {t(language, 'retry')}
-              </button>
-            )}
-          </div>
-        )}
-
-        {results?.rows?.length > 0 && (
+        {mode === 'audit' ? (
+          <AuditView language={language} onToast={setToast} />
+        ) : (
           <>
-            <StatTiles language={language} results={results} />
-            <SpeedChart language={language} results={results} />
-            <ResourceBreakdown language={language} results={results} />
-            <ResultsTable language={language} results={results} />
-            <ExportButtons language={language} results={results} onToast={setToast} />
+            <TestForm language={language} disabled={loading || !online} onSubmit={handleTestSubmit} />
+
+            {loading && <ProgressBar language={language} done={progress.done} total={progress.total} />}
+
+            {error && (
+              <div className="banner banner-danger" role="alert">
+                <span>{error}</span>
+                {lastRequest && (
+                  <button type="button" onClick={handleRetry}>
+                    {t(language, 'retry')}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {results?.rows?.length > 0 && (
+              <>
+                <StatTiles language={language} results={results} />
+                <SpeedChart language={language} results={results} />
+                <ResourceBreakdown language={language} results={results} />
+                <ResultsTable language={language} results={results} />
+                <ExportButtons language={language} results={results} onToast={setToast} />
+              </>
+            )}
           </>
         )}
       </main>

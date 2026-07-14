@@ -24,6 +24,7 @@ const browserGlobals = {
   process: 'readonly',
   Buffer: 'readonly',
   TextDecoder: 'readonly',
+  URLSearchParams: 'readonly',
 };
 
 export default [

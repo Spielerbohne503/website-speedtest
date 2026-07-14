@@ -7,10 +7,18 @@
  */
 import * as speedTest from '../functions/api/speed-test.js';
 import * as resources from '../functions/api/resources.js';
+import * as crawl from '../functions/api/crawl.js';
+import * as subdomains from '../functions/api/subdomains.js';
+import * as lighthouse from '../functions/api/lighthouse.js';
+import * as security from '../functions/api/security.js';
 
 const ROUTES = {
   '/api/speed-test': speedTest,
   '/api/resources': resources,
+  '/api/crawl': crawl,
+  '/api/subdomains': subdomains,
+  '/api/lighthouse': lighthouse,
+  '/api/security': security,
 };
 
 export default {

@@ -77,7 +77,15 @@ export async function onRequestPost({ request }) {
       );
       for (const { url, result } of batch) {
         if (result && !result.error && result.status < 400) {
-          measured[type].push({ url, bytes: result.bytes, timeMs: result.timeMs });
+          measured[type].push({
+            url,
+            bytes: result.bytes,
+            timeMs: result.timeMs,
+            format: fileFormat(url, result.headers?.contentType),
+            compression: result.headers?.compression ?? 'none',
+            cached: result.headers?.cached ?? false,
+            cdn: result.headers?.cdn ?? null,
+          });
         } else {
           failed++;
         }
@@ -102,11 +110,27 @@ export async function onRequestPost({ request }) {
   const slowestMs = Math.max(0, ...Object.values(byType).flatMap((t) => t.items.map((i) => i.timeMs)));
   const totalBytes = doc.bytes + Object.values(byType).reduce((sum, t) => sum + t.bytes, 0);
 
+  // Aggregierte Optimierungs-Signale über alle Ressourcen
+  const allItems = Object.values(byType).flatMap((t) => t.items);
+  const insights = {
+    uncompressedCount: allItems.filter((i) => i.compression === 'none' && i.bytes > 30_000).length,
+    uncachedCount: allItems.filter((i) => !i.cached).length,
+    cdnUsed: [...new Set(allItems.map((i) => i.cdn).filter(Boolean))],
+    legacyImages: byType.images.items.filter((i) => /jpg|jpeg|png|gif/.test(i.format ?? '')).length,
+  };
+
   return jsonResponse({
     url: target.href,
     timestamp: new Date().toISOString(),
-    document: { timeMs: doc.timeMs, bytes: doc.bytes, status: doc.status },
+    document: {
+      timeMs: doc.timeMs,
+      bytes: doc.bytes,
+      status: doc.status,
+      compression: doc.headers?.compression ?? 'none',
+      cdn: doc.headers?.cdn ?? null,
+    },
     byType,
+    insights,
     totals: {
       requests: 1 + Object.values(byType).reduce((sum, t) => sum + t.tested, 0),
       bytes: totalBytes,
@@ -164,6 +188,16 @@ export function extractResources(html, baseUrl) {
   return { images: [...images], css: [...css], js: [...js] };
 }
 
+// Dateiformat aus Content-Type bzw. URL-Endung
+export function fileFormat(url, contentType) {
+  if (contentType) {
+    const sub = contentType.split('/')[1];
+    if (sub) return sub.replace('+xml', '').replace('javascript', 'js').toLowerCase();
+  }
+  const ext = /\.([a-z0-9]{2,5})(?:\?|#|$)/i.exec(url)?.[1];
+  return ext ? ext.toLowerCase() : null;
+}
+
 // ---------- Einzelmessung ----------
 
 async function timedFetch(url, timeoutMs, { wantText = false } = {}) {
@@ -184,6 +218,7 @@ async function timedFetch(url, timeoutMs, { wantText = false } = {}) {
       bytes: buffer.byteLength,
       status: response.status,
       finalUrl: response.url,
+      headers: analyzeHeaders(response.headers),
     };
     if (wantText) {
       result.text = new TextDecoder('utf-8', { fatal: false }).decode(
@@ -195,4 +230,37 @@ async function timedFetch(url, timeoutMs, { wantText = false } = {}) {
     clearTimeout(timer);
     return { error: String(error?.message ?? error) };
   }
+}
+
+// Kompression, Caching und CDN aus den Response-Headern ableiten
+export function analyzeHeaders(headers) {
+  const get = (name) => headers.get(name) ?? null;
+  const encoding = (get('content-encoding') ?? '').toLowerCase();
+  const cacheControl = get('cache-control');
+  const server = (get('server') ?? '').toLowerCase();
+  const via = (get('via') ?? '').toLowerCase();
+
+  // CDN-Erkennung über verräterische Header
+  let cdn = null;
+  if (get('cf-ray') || server.includes('cloudflare')) cdn = 'Cloudflare';
+  else if (get('x-amz-cf-id') || via.includes('cloudfront')) cdn = 'CloudFront';
+  else if (get('x-fastly-request-id') || via.includes('fastly') || server.includes('fastly')) cdn = 'Fastly';
+  else if (get('x-vercel-id') || server.includes('vercel')) cdn = 'Vercel';
+  else if (get('x-nf-request-id') || server.includes('netlify')) cdn = 'Netlify';
+  else if (get('x-akamai-transformed') || via.includes('akamai')) cdn = 'Akamai';
+  else if (get('x-cache') || get('age')) cdn = 'CDN/Cache';
+
+  // Cache-Bewertung: hat die Ressource eine sinnvolle Caching-Anweisung?
+  const maxAge = cacheControl && /max-age=(\d+)/.exec(cacheControl)?.[1];
+  const cached =
+    (maxAge && Number(maxAge) > 0) || /immutable/.test(cacheControl ?? '') || Boolean(get('etag'));
+
+  return {
+    compression: /br/.test(encoding) ? 'brotli' : /gzip/.test(encoding) ? 'gzip' : /deflate/.test(encoding) ? 'deflate' : 'none',
+    cacheControl,
+    cached: Boolean(cached),
+    maxAge: maxAge ? Number(maxAge) : null,
+    cdn,
+    contentType: (get('content-type') ?? '').split(';')[0] || null,
+  };
 }

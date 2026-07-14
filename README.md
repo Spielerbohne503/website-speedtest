@@ -9,6 +9,23 @@ Miss die Ladezeit deiner Website aus **9 Ländern** (DE, US, GB, FR, NL, ES, IT,
 - 🌍 **Echte Länder-Messungen** über die kostenlose [Globalping API](https://globalping.io) (echte Probes im jeweiligen Land), automatischer Fallback auf direkte Cloudflare-Edge-Messung
 - 📊 Statistik pro URL×Land: Mittelwert, Standardabweichung, Min/Max, Median, TTFB, Success-Rate
 - 🖼️ **Ressourcen-Analyse** pro URL (`POST /api/resources`): Bilder, CSS und JavaScript werden einzeln vermessen (Ladezeit + Größe), mit Gewichts-Verteilung, den langsamsten Ressourcen und Bild-Optimierungs-Hinweis (max. 12 Bilder / 8 CSS / 8 JS wegen Subrequest-Limit)
+- 🔬 **Voll-Audit-Modus** (eigener Tab): crawlt die ganze Domain (bis ~50 Seiten), findet Subdomains über Certificate-Transparency-Logs (crt.sh + CertSpotter-Fallback), misst Core Web Vitals & Lighthouse über Google PageSpeed Insights (mobil + optional Desktop), inkl. **WebPageTest-Stil „Page Performance"-Panel mit Filmstrip** (visueller Seitenaufbau), Sicherheits-/Header-Analyse (HTTPS, HSTS, CSP, Cookies, CDN, Kompression), Broken-Link-Erkennung und priorisierten Optimierungsvorschlägen
+
+### Voll-Audit – Endpunkte
+
+| Endpunkt | Zweck |
+|---|---|
+| `POST /api/crawl` | Same-Origin-Crawler (batchweise Wellen), findet Seiten, Redirects, Broken Links |
+| `POST /api/subdomains` | Subdomain-Discovery via Certificate Transparency (crt.sh → CertSpotter-Fallback) |
+| `POST /api/lighthouse` | Core Web Vitals + Lighthouse + Filmstrip via Google PageSpeed Insights |
+| `POST /api/security` | HTTPS/HSTS/CSP/Cookie-/CDN-/Kompressions-Analyse, Schulnote A–F |
+
+**PageSpeed-Insights-API-Key** (empfohlen): Ohne Key ist PSI streng limitiert (geteiltes Anonym-Kontingent). Kostenlosen Key in der [Google Cloud Console](https://console.cloud.google.com/apis/library/pagespeedonline.googleapis.com) erstellen und als Secret setzen:
+```bash
+wrangler pages secret put PSI_API_KEY   # bzw. wrangler secret put PSI_API_KEY (Worker)
+```
+
+⚖️ **Nur eigene Domains auditieren** (oder mit Freigabe). Alle Quellen sind öffentlich und passiv.
 - ✅ Farbcodierte Bewertung: `< 1.5s` ✅ SUPER · `1.5–2.5s` ⚠️ OK · `> 2.5s` ❌ LANGSAM
 - 🗂️ Sortierbare Ergebnistabelle (Klick auf Spaltentitel)
 - 📄 Exporte mit Fallback-Ketten: PDF (jsPDF → Druckansicht), Excel (3 Sheets → CSV), CSV (UTF-8 BOM), JSON → Zwischenablage
@@ -146,7 +163,9 @@ Es sind aktuell **keine** Secrets nötig — Globalping ist ohne API-Key nutzbar
 
 | Limitation | Grund | Verhalten |
 |---|---|---|
-| Keine FCP/LCP-Messung | Erfordert echten Browser mit Rendering; weder Worker-`fetch` noch Globalping rendern | Gemessen werden TTFB, Gesamtladezeit, Statuscode, Content-Length |
+| FCP/LCP/CLS/INP/TBT nur via PSI | Erfordert echten Browser; der Worker kann nicht rendern | Im Speed-Test nur TTFB/Ladezeit; im Voll-Audit über PageSpeed Insights (echtes Lighthouse) |
+| Keine UI-Interaktions-Tests | Klick-/Dropdown-/Modal-Latenzen brauchen einen Headless-Browser, der die Live-Seite bedient | Nicht messbar; im Bericht transparent als Limitation ausgewiesen |
+| TLS-Version/HTTP-Protokoll | Aus einem Worker-`fetch` nicht auslesbar | HTTP/3 wird heuristisch über `alt-svc` erkannt; TLS-Version bleibt offen |
 | Globalping-Rate-Limits | Free Tier (ohne API-Key) begrenzt Messungen pro Stunde | Automatischer Fallback auf Edge-Messung (`source: "edge"` im Ergebnis) |
 | Edge-Messung ohne Länderbezug | Cloudflare Workers können ihren Standort nicht wählen | Edge-Ergebnisse sind als „⚡ Edge-Messung" gekennzeichnet |
 | Max. 5 Globalping-Probes pro Land | Free-Tier-Schonung | `repeats` > 5 gilt nur für den Edge-Fallback (bis 30) |
