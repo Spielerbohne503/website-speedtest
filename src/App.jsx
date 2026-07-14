@@ -5,7 +5,8 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import TestForm from './components/TestForm';
-import ProgressBar from './components/ProgressBar';
+import RocketProgress from './components/RocketProgress';
+import StarField from './components/StarField';
 import StatTiles from './components/StatTiles';
 import SpeedChart from './components/SpeedChart';
 import ResourceBreakdown from './components/ResourceBreakdown';
@@ -84,6 +85,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <StarField />
       <header className="app-header">
         <div className="hero-glow" aria-hidden="true" />
         <button type="button" className="lang-toggle" onClick={toggleLanguage} aria-label="Sprache wechseln / switch language">
@@ -124,7 +126,14 @@ export default function App() {
           <>
             <TestForm language={language} disabled={loading || !online} onSubmit={handleTestSubmit} />
 
-            {loading && <ProgressBar language={language} done={progress.done} total={progress.total} />}
+            {loading && (
+              <RocketProgress
+                label={t(language, 'progressLabel')}
+                done={progress.done}
+                total={progress.total}
+                hint={t(language, 'progressSlow')}
+              />
+            )}
 
             {error && (
               <div className="banner banner-danger" role="alert">

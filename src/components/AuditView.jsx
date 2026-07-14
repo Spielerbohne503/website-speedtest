@@ -8,6 +8,7 @@ import { useState } from 'react';
 import { t } from '../utils/i18n';
 import { runAudit, isOnline } from '../api/audit';
 import { msToSeconds, formatBytes, formatMs } from '../utils/formatters';
+import RocketProgress from './RocketProgress';
 
 const PHASES = ['crawl', 'subdomains', 'resources', 'lighthouse'];
 const PHASE_LABEL = {
@@ -149,26 +150,19 @@ export default function AuditView({ language, onToast }) {
 
 function AuditProgress({ language, progress }) {
   const activeIndex = PHASES.indexOf(progress.phase);
-  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
   return (
-    <div className="card progress-card">
-      <div className="audit-phases">
-        {PHASES.map((phase, i) => (
-          <span key={phase} className={`audit-phase ${i < activeIndex ? 'is-done' : i === activeIndex ? 'is-active' : ''}`}>
-            {i < activeIndex ? '✓' : i === activeIndex ? '●' : '○'} {t(language, PHASE_LABEL[phase])}
-          </span>
-        ))}
-      </div>
-      <div className="progress-label">
-        <span>{t(language, PHASE_LABEL[progress.phase])}: {progress.done}/{progress.total}</span>
-        <span className="progress-percent">{pct}%</span>
-      </div>
-      <div className="progress-track" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-        <div className="progress-fill" style={{ width: `${Math.max(3, pct)}%` }}>
-          <span className="progress-shimmer" aria-hidden="true" />
+    <>
+      <div className="card audit-phase-strip">
+        <div className="audit-phases">
+          {PHASES.map((phase, i) => (
+            <span key={phase} className={`audit-phase ${i < activeIndex ? 'is-done' : i === activeIndex ? 'is-active' : ''}`}>
+              {i < activeIndex ? '✓' : i === activeIndex ? '●' : '○'} {t(language, PHASE_LABEL[phase])}
+            </span>
+          ))}
         </div>
       </div>
-    </div>
+      <RocketProgress label={t(language, PHASE_LABEL[progress.phase])} done={progress.done} total={progress.total} />
+    </>
   );
 }
 
