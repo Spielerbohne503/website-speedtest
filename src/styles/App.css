@@ -806,6 +806,153 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* ---------- Ressourcen-Analyse ---------- */
+
+.res-block {
+  margin-bottom: 1.25rem;
+}
+
+.res-block:last-child {
+  margin-bottom: 0;
+}
+
+.res-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.1rem;
+}
+
+.res-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--ink-2);
+  background: #fbfcfe;
+}
+
+.res-chip strong {
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+
+.res-bar {
+  display: flex;
+  gap: 2px; /* Surface-Gap trennt die Segmente */
+  height: 16px;
+  margin-bottom: 0.7rem;
+}
+
+.res-segment {
+  border-radius: 3px;
+  transition: filter 0.15s;
+  min-width: 3px;
+}
+
+.res-segment:hover {
+  filter: brightness(1.08);
+}
+
+.res-legend {
+  list-style: none;
+  margin: 0 0 1.2rem;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem 1.5rem;
+  font-size: 0.85rem;
+}
+
+.res-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.res-legend-label {
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.res-legend-value {
+  margin-left: auto;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.res-slowest h3 {
+  margin: 0 0 0.55rem;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
+.res-slowest ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.res-slowest li {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) 1fr auto;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.res-file {
+  font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.78rem;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.res-file-bar {
+  height: 8px;
+  border-radius: 0 3px 3px 0;
+  background: var(--gridline);
+  overflow: hidden;
+}
+
+.res-file-fill {
+  display: block;
+  height: 100%;
+  background: #6da7ec;
+  border-radius: 0 3px 3px 0;
+}
+
+.res-file-meta {
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.res-hint {
+  margin: 1.1rem 0 0;
+  padding: 0.7rem 1rem;
+  background: var(--primary-soft);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+.res-note {
+  margin: 0.8rem 0 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
 /* ---------- Ergebnistabelle ---------- */
 
 .results-head {
@@ -1043,6 +1190,18 @@ tbody tr:hover {
 
   .chart-label {
     font-size: 0.8rem;
+  }
+
+  .res-legend {
+    grid-template-columns: 1fr;
+  }
+
+  .res-slowest li {
+    grid-template-columns: minmax(100px, 1fr) auto;
+  }
+
+  .res-slowest .res-file-bar {
+    display: none;
   }
 
   body {

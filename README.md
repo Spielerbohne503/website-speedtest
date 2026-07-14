@@ -8,6 +8,7 @@ Miss die Ladezeit deiner Website aus **9 Ländern** (DE, US, GB, FR, NL, ES, IT,
 
 - 🌍 **Echte Länder-Messungen** über die kostenlose [Globalping API](https://globalping.io) (echte Probes im jeweiligen Land), automatischer Fallback auf direkte Cloudflare-Edge-Messung
 - 📊 Statistik pro URL×Land: Mittelwert, Standardabweichung, Min/Max, Median, TTFB, Success-Rate
+- 🖼️ **Ressourcen-Analyse** pro URL (`POST /api/resources`): Bilder, CSS und JavaScript werden einzeln vermessen (Ladezeit + Größe), mit Gewichts-Verteilung, den langsamsten Ressourcen und Bild-Optimierungs-Hinweis (max. 12 Bilder / 8 CSS / 8 JS wegen Subrequest-Limit)
 - ✅ Farbcodierte Bewertung: `< 1.5s` ✅ SUPER · `1.5–2.5s` ⚠️ OK · `> 2.5s` ❌ LANGSAM
 - 🗂️ Sortierbare Ergebnistabelle (Klick auf Spaltentitel)
 - 📄 Exporte mit Fallback-Ketten: PDF (jsPDF → Druckansicht), Excel (3 Sheets → CSV), CSV (UTF-8 BOM), JSON → Zwischenablage

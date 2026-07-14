@@ -1,18 +1,25 @@
 /**
  * Worker-Einstiegspunkt für Cloudflare Workers mit statischen Assets
  * (Workers-Builds-Deploy via `npx wrangler deploy`).
- * Routet /api/speed-test auf die bestehende Handler-Logik und liefert
+ * Routet die API-Pfade auf die bestehende Handler-Logik und liefert
  * alle übrigen Requests aus dem Asset-Verzeichnis (dist/) aus.
- * Die Pages-Variante (functions/api/speed-test.js) bleibt unverändert nutzbar.
+ * Die Pages-Variante (functions/api/*.js) bleibt unverändert nutzbar.
  */
-import { onRequestPost, onRequestOptions } from '../functions/api/speed-test.js';
+import * as speedTest from '../functions/api/speed-test.js';
+import * as resources from '../functions/api/resources.js';
+
+const ROUTES = {
+  '/api/speed-test': speedTest,
+  '/api/resources': resources,
+};
 
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
-    if (url.pathname === '/api/speed-test') {
-      if (request.method === 'OPTIONS') return onRequestOptions();
-      if (request.method === 'POST') return onRequestPost({ request, env, ctx });
+    const route = ROUTES[url.pathname];
+    if (route) {
+      if (request.method === 'OPTIONS') return route.onRequestOptions();
+      if (request.method === 'POST') return route.onRequestPost({ request, env, ctx });
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers: { 'content-type': 'application/json', allow: 'POST, OPTIONS' },

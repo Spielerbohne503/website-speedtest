@@ -9,7 +9,13 @@
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { join, extname, normalize } from 'node:path';
-import { onRequestPost, onRequestOptions } from '../functions/api/speed-test.js';
+import * as speedTest from '../functions/api/speed-test.js';
+import * as resources from '../functions/api/resources.js';
+
+const ROUTES = {
+  '/api/speed-test': speedTest,
+  '/api/resources': resources,
+};
 
 const PORT = process.env.PORT || 8788;
 const DIST = new URL('../dist', import.meta.url).pathname;
@@ -23,7 +29,8 @@ const MIME = {
 
 const server = createServer(async (req, res) => {
   try {
-    if (req.url.startsWith('/api/speed-test')) {
+    const route = ROUTES[req.url.split('?')[0]];
+    if (route) {
       const chunks = [];
       for await (const chunk of req) chunks.push(chunk);
       const request = new Request(`http://localhost:${PORT}${req.url}`, {
@@ -32,7 +39,9 @@ const server = createServer(async (req, res) => {
         body: chunks.length ? Buffer.concat(chunks) : undefined,
       });
       const response =
-        req.method === 'OPTIONS' ? onRequestOptions() : await onRequestPost({ request });
+        req.method === 'OPTIONS'
+          ? route.onRequestOptions()
+          : await route.onRequestPost({ request });
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(Buffer.from(await response.arrayBuffer()));
       return;

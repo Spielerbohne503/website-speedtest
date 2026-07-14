@@ -23,6 +23,7 @@ const browserGlobals = {
   console: 'readonly',
   process: 'readonly',
   Buffer: 'readonly',
+  TextDecoder: 'readonly',
 };
 
 export default [

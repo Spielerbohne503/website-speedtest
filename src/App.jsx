@@ -8,6 +8,7 @@ import TestForm from './components/TestForm';
 import ProgressBar from './components/ProgressBar';
 import StatTiles from './components/StatTiles';
 import SpeedChart from './components/SpeedChart';
+import ResourceBreakdown from './components/ResourceBreakdown';
 import ResultsTable from './components/ResultsTable';
 import ExportButtons from './components/ExportButtons';
 import { getLanguage, setLanguage, t } from './utils/i18n';
@@ -124,6 +125,7 @@ export default function App() {
           <>
             <StatTiles language={language} results={results} />
             <SpeedChart language={language} results={results} />
+            <ResourceBreakdown language={language} results={results} />
             <ResultsTable language={language} results={results} />
             <ExportButtons language={language} results={results} onToast={setToast} />
           </>

@@ -76,21 +76,45 @@ function toRow(tech, simple) {
   };
 }
 
+// Ressourcen-Analyse (Bilder/CSS/JS) einer URL – ein Aufruf pro URL,
+// Fehler werden toleriert (dann fehlt nur die Ressourcen-Karte)
+async function analyzeResources(url) {
+  const { data } = await api.post('/api/resources', { url });
+  return data;
+}
+
 /**
  * Führt alle URL×Land-Kombinationen aus (Concurrency 2) und meldet Fortschritt.
+ * Parallel läuft pro URL eine Ressourcen-Analyse (Bilder/CSS/JS).
  * Fehler einzelner Kombinationen brechen NICHT ab, sondern landen in `errors`.
- * @returns {Promise<{timestamp, rows, raw, errors}>}
+ * @returns {Promise<{timestamp, rows, raw, resources, errors}>}
  */
 export async function runSpeedTest(urls, proxies, repeats, onProgress) {
   const combos = [];
   for (const url of urls) for (const proxy of proxies) combos.push({ url, proxy });
 
-  const total = combos.length;
+  const total = combos.length + urls.length; // + 1 Ressourcen-Analyse pro URL
   let done = 0;
-  const rows = new Array(total).fill(null);
+  const rows = new Array(combos.length).fill(null);
   const raw = { timestamp: new Date().toISOString(), data: [], simplified: [] };
   const errors = [];
   onProgress?.(0, total);
+
+  const resourcesPromise = Promise.all(
+    urls.map(async (url) => {
+      try {
+        const analysis = await analyzeResources(url);
+        done++;
+        onProgress?.(done, total);
+        return analysis;
+      } catch (error) {
+        errors.push({ url, country: null, message: `resources: ${error.message}` });
+        done++;
+        onProgress?.(done, total);
+        return null;
+      }
+    }),
+  );
 
   let cursor = 0;
   async function worker() {
@@ -112,7 +136,9 @@ export async function runSpeedTest(urls, proxies, repeats, onProgress) {
     }
   }
 
-  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, total) }, worker));
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, combos.length) }, worker));
+  const resources = (await resourcesPromise).filter(Boolean);
+  raw.resources = resources;
 
   const validRows = rows.filter(Boolean);
   for (const row of validRows) {
@@ -140,7 +166,7 @@ export async function runSpeedTest(urls, proxies, repeats, onProgress) {
     });
   }
 
-  return { timestamp: raw.timestamp, rows: validRows, raw, errors };
+  return { timestamp: raw.timestamp, rows: validRows, raw, resources, errors };
 }
 
 // Fehler → benutzerfreundlicher i18n-Schlüssel (kein technischer Stacktrace)

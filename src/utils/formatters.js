@@ -15,6 +15,15 @@ export function formatMs(ms) {
   return `${Math.round(ms)} ms`;
 }
 
+// 1234567 → "1.2 MB" (en) / "1,2 MB" (de)
+export function formatBytes(bytes, lang = 'de') {
+  if (bytes == null || !Number.isFinite(bytes)) return '–';
+  const sep = (value) => (lang === 'de' ? String(value).replace('.', ',') : String(value));
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${sep(Math.round(bytes / 1024))} KB`;
+  return `${sep((bytes / (1024 * 1024)).toFixed(1))} MB`;
+}
+
 export function formatTimestamp(iso, lang) {
   try {
     const pattern = lang === 'de' ? 'dd.MM.yyyy HH:mm' : 'yyyy-MM-dd HH:mm';

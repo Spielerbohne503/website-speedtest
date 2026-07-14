@@ -196,6 +196,30 @@ export async function exportExcel(results, lang) {
     }));
     appendSheet(XLSX, workbook, t(lang, 'sheetRec'), recs);
 
+    // Sheet 4: Ressourcen-Analyse (Bilder/CSS/JS), falls vorhanden
+    const analyses = results.resources ?? [];
+    if (analyses.length) {
+      const resRows = analyses.flatMap((analysis) => [
+        {
+          page: analysis.url,
+          type: 'document',
+          file: analysis.url,
+          bytes: analysis.document.bytes,
+          time_ms: analysis.document.timeMs,
+        },
+        ...Object.entries(analysis.byType).flatMap(([type, data]) =>
+          data.items.map((item) => ({
+            page: analysis.url,
+            type,
+            file: item.url,
+            bytes: item.bytes,
+            time_ms: item.timeMs,
+          })),
+        ),
+      ]);
+      appendSheet(XLSX, workbook, t(lang, 'resTitle'), resRows);
+    }
+
     XLSX.writeFile(workbook, exportFilename('xlsx'));
     return t(lang, 'exportDone');
   } catch {
