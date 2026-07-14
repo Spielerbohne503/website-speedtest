@@ -46,10 +46,12 @@ const server = createServer(async (req, res) => {
         headers: req.headers,
         body: chunks.length ? Buffer.concat(chunks) : undefined,
       });
+      // env aus process.env durchreichen (z.B. PSI_API_KEY für Lighthouse).
+      // Secrets kommen nur aus der Shell-Umgebung, nie aus dem Repo.
       const response =
         req.method === 'OPTIONS'
           ? route.onRequestOptions()
-          : await route.onRequestPost({ request });
+          : await route.onRequestPost({ request, env: process.env });
       res.writeHead(response.status, Object.fromEntries(response.headers));
       res.end(Buffer.from(await response.arrayBuffer()));
       return;
