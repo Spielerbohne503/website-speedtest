@@ -14,5 +14,7 @@ directory = "./dist"
 binding = "ASSETS"
 not_found_handling = "single-page-application"
 
-# Secrets (falls später benötigt) per CLI setzen, nie einchecken:
-#   wrangler secret put API_KEY
+# PageSpeed-Insights-Key (Test-Key, bewusst inline für Git-Deploy).
+# Für Produktion besser als Secret setzen: wrangler secret put PSI_API_KEY
+[vars]
+PSI_API_KEY = "AIzaSyCijNQXk1OYlVVNEfiC5KoWeLuQ6PEm11A"
