@@ -1,20 +1,20 @@
 /**
- * ExportButtons – PDF / Excel / CSV / JSON-Clipboard.
- * Jeder Export hat eine Fallback-Kette (siehe utils/exporters.js);
- * das Ergebnis wird als Toast-Nachricht gemeldet.
- * Props: language, results, onToast(message).
+ * ExportButtons – PDF / Excel / CSV / JSON-Datei / JSON-Clipboard.
+ * Arbeitet auf dem kombinierten Ergebnis { speed, audit }.
+ * Jeder Export hat eine Fallback-Kette; das Ergebnis wird als Toast gemeldet.
+ * Props: language, result ({ speed, audit }), onToast(message).
  */
 import { useState } from 'react';
 import { t } from '../utils/i18n';
-import { exportPDF, exportExcel, exportCSV, copyJSON } from '../utils/exporters';
+import { exportPDF, exportExcel, exportCSV, exportJSON, copyJSON } from '../utils/exporters';
 
-export default function ExportButtons({ language, results, onToast }) {
+export default function ExportButtons({ language, result, onToast }) {
   const [busy, setBusy] = useState(null);
 
   const run = async (name, fn) => {
     setBusy(name);
     try {
-      const message = await fn(results, language);
+      const message = await fn(result, language);
       if (message) onToast(message);
     } catch {
       onToast(t(language, 'errorGeneric'));
@@ -27,6 +27,7 @@ export default function ExportButtons({ language, results, onToast }) {
     { name: 'pdf', label: t(language, 'exportPdf'), fn: exportPDF },
     { name: 'excel', label: t(language, 'exportExcel'), fn: exportExcel },
     { name: 'csv', label: t(language, 'exportCsv'), fn: exportCSV },
+    { name: 'jsonFile', label: t(language, 'exportJsonFile'), fn: exportJSON },
     { name: 'json', label: t(language, 'exportJson'), fn: copyJSON },
   ];
 

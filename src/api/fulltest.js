@@ -19,7 +19,7 @@ import { runAudit } from './audit';
 // So viele gecrawlte Seiten werden zusätzlich zur Startseite je Land gemessen.
 // Deckelt die Zahl der Globalping-Messungen (Seiten × Länder) auf ein Maß,
 // das das Free-Tier verkraftet (Fallback auf Edge greift bei Rate-Limits).
-const MAX_SPEED_PAGES = 8;
+const MAX_SPEED_PAGES = 12;
 
 export async function runEverything(options, onProgress) {
   const {

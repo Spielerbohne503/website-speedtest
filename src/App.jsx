@@ -26,6 +26,7 @@ import {
 import { getLanguage, setLanguage, t } from './utils/i18n';
 import { runEverything } from './api/fulltest';
 import { isOnline } from './api/client';
+import { parseImportedJSON } from './utils/exporters';
 import './styles/App.css';
 
 const PHASE_LABEL = {
@@ -101,6 +102,17 @@ export default function App() {
 
   const handleRetry = () => lastOptions && handleSubmit(lastOptions);
 
+  const handleImport = (text) => {
+    try {
+      const imported = parseImportedJSON(text);
+      setResult(imported);
+      setError(null);
+      setToast(t(language, 'importSuccess'));
+    } catch {
+      setToast(t(language, 'importError'));
+    }
+  };
+
   const speed = result?.speed;
   const audit = result?.audit;
   const hasResult = Boolean(audit?.pages?.length || speed?.rows?.length);
@@ -132,7 +144,12 @@ export default function App() {
           </div>
         )}
 
-        <UnifiedForm language={language} disabled={loading || !online} onSubmit={handleSubmit} />
+        <UnifiedForm
+          language={language}
+          disabled={loading || !online}
+          onSubmit={handleSubmit}
+          onImport={handleImport}
+        />
 
         {loading && (
           <RocketProgress
@@ -171,12 +188,8 @@ export default function App() {
             {audit && <PagesSection language={language} report={audit} />}
             {audit && <SubdomainsSection language={language} report={audit} />}
             {audit && <ErrorsSection language={language} report={audit} />}
-            {speed?.rows?.length > 0 && (
-              <>
-                <ResultsTable language={language} results={speed} />
-                <ExportButtons language={language} results={speed} onToast={setToast} />
-              </>
-            )}
+            {speed?.rows?.length > 0 && <ResultsTable language={language} results={speed} />}
+            <ExportButtons language={language} result={result} onToast={setToast} />
             {audit && <Limitations language={language} />}
           </div>
         )}

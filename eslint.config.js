@@ -10,6 +10,7 @@ const browserGlobals = {
   fetch: 'readonly',
   URL: 'readonly',
   Blob: 'readonly',
+  FileReader: 'readonly',
   Response: 'readonly',
   Request: 'readonly',
   AbortController: 'readonly',
@@ -40,7 +41,7 @@ export default [
     },
     settings: { react: { version: 'detect' } },
     rules: {
-      'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      'no-unused-vars': ['warn', { argsIgnorePattern: '^_', ignoreRestSiblings: true }],
       'no-undef': 'error',
       'react/jsx-uses-react': 'off',
       'react/react-in-jsx-scope': 'off',

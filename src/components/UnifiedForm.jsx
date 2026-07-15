@@ -4,10 +4,11 @@
  * Subdomains, Lighthouse, Desktop). Ein Klick startet alles.
  * Props: language, disabled, onSubmit(options).
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { COUNTRIES, t, countryName, cityName } from '../utils/i18n';
 
-export default function UnifiedForm({ language, disabled, onSubmit }) {
+export default function UnifiedForm({ language, disabled, onSubmit, onImport }) {
+  const fileInput = useRef(null);
   const [url, setUrl] = useState('');
   const [selected, setSelected] = useState(() => new Set(COUNTRIES.map((c) => c.country)));
   const [repeats, setRepeats] = useState(5);
@@ -121,9 +122,27 @@ export default function UnifiedForm({ language, disabled, onSubmit }) {
           <input id="u-lh" type="number" min={1} max={15} value={lighthouseCount}
             onChange={(e) => setLighthouseCount(Math.min(15, Math.max(1, Number(e.target.value) || 1)))} disabled={disabled || !wantLighthouse} />
         </label>
+        <button type="button" className="btn-secondary import-btn" disabled={disabled}
+          onClick={() => fileInput.current?.click()}>
+          {t(language, 'importLabel')}
+        </button>
         <button type="submit" className="btn-primary" disabled={disabled}>
           {disabled ? t(language, 'unifiedRunning') : t(language, 'unifiedStart')}
         </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: 'none' }}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => onImport?.(String(reader.result));
+            reader.readAsText(file);
+            e.target.value = '';
+          }}
+        />
       </div>
 
       <p className="audit-hint">🌍 {t(language, 'scopeNote')}</p>
