@@ -40,7 +40,7 @@ export default function App() {
   const [language, setLang] = useState(getLanguage);
   const [result, setResult] = useState(null); // { speed, audit }
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState({ phase: 'speed', done: 0, total: 0 });
+  const [progress, setProgress] = useState({ phase: 'crawl', done: 0, total: 0 });
   const [error, setError] = useState(null);
   const [toast, setToast] = useState(null);
   const [online, setOnline] = useState(isOnline());
@@ -79,7 +79,7 @@ export default function App() {
       setLoading(true);
       setError(null);
       setResult(null);
-      setProgress({ phase: 'speed', done: 0, total: 0 });
+      setProgress({ phase: 'crawl', done: 0, total: 0 });
       try {
         const res = await runEverything(options, (phase, done, total) =>
           setProgress({ phase, done, total }),

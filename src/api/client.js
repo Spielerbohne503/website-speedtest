@@ -89,11 +89,14 @@ async function analyzeResources(url) {
  * Fehler einzelner Kombinationen brechen NICHT ab, sondern landen in `errors`.
  * @returns {Promise<{timestamp, rows, raw, resources, errors}>}
  */
-export async function runSpeedTest(urls, proxies, repeats, onProgress) {
+export async function runSpeedTest(urls, proxies, repeats, onProgress, options = {}) {
+  // resourceUrls: für welche URLs die Ressourcen-Analyse läuft (Default: alle).
+  // Beim Site-weiten Lauf nur die Startseite, um Doppel-Requests zu sparen.
+  const resourceUrls = options.resourceUrls ?? urls;
   const combos = [];
   for (const url of urls) for (const proxy of proxies) combos.push({ url, proxy });
 
-  const total = combos.length + urls.length; // + 1 Ressourcen-Analyse pro URL
+  const total = combos.length + resourceUrls.length;
   let done = 0;
   const rows = new Array(combos.length).fill(null);
   const raw = { timestamp: new Date().toISOString(), data: [], simplified: [] };
@@ -101,7 +104,7 @@ export async function runSpeedTest(urls, proxies, repeats, onProgress) {
   onProgress?.(0, total);
 
   const resourcesPromise = Promise.all(
-    urls.map(async (url) => {
+    resourceUrls.map(async (url) => {
       try {
         const analysis = await analyzeResources(url);
         done++;

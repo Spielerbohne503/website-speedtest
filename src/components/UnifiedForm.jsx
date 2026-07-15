@@ -126,6 +126,7 @@ export default function UnifiedForm({ language, disabled, onSubmit }) {
         </button>
       </div>
 
+      <p className="audit-hint">🌍 {t(language, 'scopeNote')}</p>
       <p className="audit-hint">ℹ️ {t(language, 'auditNote')}</p>
       {wantLighthouse && <p className="audit-hint">🔑 {t(language, 'psiKeyNote')}</p>}
       {message && <ul className="form-messages" role="alert"><li>{message}</li></ul>}

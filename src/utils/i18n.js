@@ -119,6 +119,8 @@ const dict = {
     unifiedRunning: 'Analyse läuft…',
     phaseSpeed: 'Länder-Speed',
     optSpeed: 'Länder-Speed messen (Globalping)',
+    scopeNote:
+      'Länder + Wiederholungen gelten für ALLE gecrawlten Seiten (Netzwerk-Messung). Lighthouse/Core Web Vitals laufen immer von Googles Standort – nicht pro Land wählbar.',
     modeSpeed: '🌍 Speed-Test',
     modeAudit: '🔬 Voll-Audit',
     auditTitle: 'Vollständiger Website-Audit',
@@ -306,6 +308,8 @@ const dict = {
     unifiedRunning: 'Analysis running…',
     phaseSpeed: 'Country speed',
     optSpeed: 'Measure country speed (Globalping)',
+    scopeNote:
+      'Countries + repeats apply to ALL crawled pages (network measurement). Lighthouse/Core Web Vitals always run from Google’s location – not selectable per country.',
     modeSpeed: '🌍 Speed test',
     modeAudit: '🔬 Full audit',
     auditTitle: 'Full website audit',
