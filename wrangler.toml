@@ -2,7 +2,7 @@
 # Deploy: `npx wrangler deploy` (Workers Builds führt das automatisch aus;
 # der [build]-Block baut das Frontend vorher).
 # Security-/CSP-Header liegen in public/_headers und landen via Vite in dist/.
-name = "website-speedtest"
+name = "ultimate-website-speedtester"
 main = "worker/index.js"
 compatibility_date = "2025-01-01"
 
