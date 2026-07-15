@@ -75,7 +75,6 @@ export async function exportPDF(result, lang) {
     const audit = result.audit;
     const speed = result.speed;
     const mainUrl = audit?.url ?? speed?.rows?.[0]?.url ?? '';
-    const lh = audit?.lighthouse?.[0] ?? null;
 
     let y = 0;
 
@@ -132,10 +131,12 @@ export async function exportPDF(result, lang) {
       y += 28;
     }
 
-    // ---- Core Web Vitals ----
-    if (lh?.pagePerf) {
-      y = sectionTitle(doc, y, `${t(lang, 'secPerf')} · ${lh.strategy}`, M);
-      const pp = lh.pagePerf;
+    // ---- Core Web Vitals + Lighthouse (alle Läufe: mobil & desktop) ----
+    for (const run of audit?.lighthouse ?? []) {
+      if (!run.pagePerf) continue;
+      y = ensure(doc, y, 42);
+      y = sectionTitle(doc, y, `${t(lang, 'secPerf')} · ${run.strategy}`, M);
+      const pp = run.pagePerf;
       const cwv = [
         { k: 'LCP', v: msToSeconds(pp.lcp), lvl: band(pp.lcp, 2500, 4000) },
         { k: 'FCP', v: msToSeconds(pp.fcp), lvl: band(pp.fcp, 1800, 3000) },
@@ -165,9 +166,20 @@ export async function exportPDF(result, lang) {
       });
       y += 22;
 
+      // Weitere Timings (Start Render, DCL, Load, Gewicht, Requests)
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8);
+      doc.setTextColor(...C.slate);
+      doc.text(
+        `Start Render ${msToSeconds(pp.startRender)} · DOMContentLoaded ${msToSeconds(pp.domContentLoaded)} · Load ${msToSeconds(pp.load)} · ${formatBytes(pp.pageWeight, lang)} · ${pp.requests ?? '–'} Requests`,
+        M,
+        y,
+      );
+      y += 6;
+
       // Lighthouse-Kategorien
-      if (lh.scores) {
-        const cats = Object.entries(lh.scores);
+      if (run.scores) {
+        const cats = Object.entries(run.scores);
         const gap2 = 3;
         const bw2 = (CW - gap2 * (cats.length - 1)) / cats.length;
         cats.forEach(([cat, score], i) => {
@@ -187,6 +199,69 @@ export async function exportPDF(result, lang) {
         });
         doc.setLineWidth(0.2);
         y += 20;
+      }
+
+      // CrUX-Feld-Daten (echte Nutzer)
+      if (run.field?.hasData) {
+        const f = run.field;
+        const fstr = (m, u = '') => (m ? `${Math.round(m.percentile)}${u} (${m.category ?? '?'})` : '–');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...C.slate);
+        doc.text(
+          `${t(lang, 'fieldReal')}: LCP ${fstr(f.lcp, 'ms')} · INP ${fstr(f.inp, 'ms')} · CLS ${fstr(f.cls)}`,
+          M,
+          y,
+        );
+        y += 6;
+      }
+
+      // Filmstrip (visueller Aufbau)
+      if (run.filmstrip?.length) {
+        y = ensure(doc, y, 44);
+        y = sectionTitle(doc, y, `${t(lang, 'ppFilmstrip')} · ${run.strategy}`, M);
+        const frames = run.filmstrip.slice(0, 9);
+        const fgap = 2;
+        const fw = (CW - fgap * (frames.length - 1)) / frames.length;
+        const maxH = 34;
+        let fx = M;
+        for (const frame of frames) {
+          try {
+            const props = doc.getImageProperties(frame.data);
+            let w = fw;
+            let h = (fw * props.height) / props.width;
+            if (h > maxH) {
+              h = maxH;
+              w = (maxH * props.width) / props.height;
+            }
+            doc.addImage(frame.data, 'JPEG', fx + (fw - w) / 2, y, w, h);
+            doc.setFontSize(5.5);
+            doc.setTextColor(...C.muted);
+            doc.text(msToSeconds(frame.timing), fx + fw / 2, y + maxH + 3, { align: 'center' });
+          } catch {
+            // Bild überspringen
+          }
+          fx += fw + fgap;
+        }
+        y += maxH + 7;
+      }
+
+      // Optimierungs-Chancen
+      if (run.opportunities?.length) {
+        y = ensure(doc, y, 16);
+        y = sectionTitle(doc, y, t(lang, 'secOpportunities'), M);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        for (const opp of run.opportunities.slice(0, 8)) {
+          y = ensure(doc, y, 6);
+          doc.setFillColor(...C.warning);
+          doc.circle(M + 1.5, y - 1, 1, 'F');
+          doc.setTextColor(...C.navy);
+          const lines = doc.splitTextToSize(ascii(`${opp.title} - ${opp.savingsMs} ms`), CW - 6);
+          doc.text(lines, M + 5, y);
+          y += Math.max(5, lines.length * 4);
+        }
+        y += 3;
       }
     }
 
@@ -214,6 +289,48 @@ export async function exportPDF(result, lang) {
       y += 4;
     }
 
+    // ---- Ressourcen (Detail der Startseite) ----
+    const res =
+      result.speed?.resources?.[0] ?? (audit?.perPage ?? []).map((p) => p.resources).find(Boolean);
+    if (res) {
+      y = ensure(doc, y, 26);
+      y = sectionTitle(doc, y, t(lang, 'secResources'), M);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(...C.slate);
+      doc.text(
+        `${t(lang, 'resWeight')}: ${formatBytes(res.totals.bytes, lang)} · ${res.totals.requests} ${t(lang, 'resRequests')} · IMG ${formatBytes(res.byType.images.bytes, lang)} · CSS ${formatBytes(res.byType.css.bytes, lang)} · JS ${formatBytes(res.byType.js.bytes, lang)}`,
+        M,
+        y,
+      );
+      y += 6;
+      const items = ['images', 'css', 'js']
+        .flatMap((tp) => res.byType[tp].items.map((it) => ({ type: tp, ...it })))
+        .sort((a, b) => b.timeMs - a.timeMs)
+        .slice(0, 10);
+      if (items.length) {
+        const rrows = items.map((it) => ({
+          file: fileNameOf(it.url),
+          type: it.type,
+          time: `${Math.round(it.timeMs)} ms`,
+          size: formatBytes(it.bytes, lang),
+        }));
+        y = drawTable(
+          doc,
+          y,
+          M,
+          [
+            { key: 'file', label: t(lang, 'colUrl'), w: 92 },
+            { key: 'type', label: t(lang, 'colType'), w: 30 },
+            { key: 'time', label: t(lang, 'colTime'), w: 30 },
+            { key: 'size', label: t(lang, 'resWeight'), w: 30 },
+          ],
+          rrows,
+        );
+      }
+      y += 4;
+    }
+
     // ---- Empfehlungen ----
     const recs = audit?.summary?.recommendations ?? [];
     if (recs.length) {
@@ -232,7 +349,7 @@ export async function exportPDF(result, lang) {
         doc.setTextColor(...C.navy);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(8.5);
-        const lines = doc.splitTextToSize(rec.text + (rec.gain ? ` (${rec.gain})` : ''), CW - 22);
+        const lines = doc.splitTextToSize(ascii(rec.text + (rec.gain ? ` (${rec.gain})` : '')), CW - 22);
         doc.text(lines, M + 20, y);
         y += Math.max(5, lines.length * 4);
       }
@@ -262,6 +379,67 @@ export async function exportPDF(result, lang) {
         { key: 'cdn', label: 'CDN', w: 36 },
       ];
       y = drawTable(doc, y, M, cols, secRows, { dotKey: 'level' });
+      y += 4;
+    }
+
+    // ---- Gecrawlte Seiten (alle) ----
+    const crawlPages = audit?.pages ?? [];
+    if (crawlPages.length) {
+      y = ensure(doc, y, 24);
+      y = sectionTitle(doc, y, `${t(lang, 'secPages')} (${crawlPages.length})`, M);
+      const prows = crawlPages.map((p) => ({
+        page: pathOf(p.url),
+        http: String(p.status || 'ERR'),
+        time: `${Math.round(p.timeMs)} ms`,
+        type: p.type ?? '–',
+        level: p.status >= 400 || p.status === 0 ? 'danger' : p.status >= 300 ? 'warning' : 'success',
+      }));
+      y = drawTable(
+        doc,
+        y,
+        M,
+        [
+          { key: 'page', label: t(lang, 'colPage'), w: 96 },
+          { key: 'http', label: t(lang, 'colHttp'), w: 24 },
+          { key: 'time', label: t(lang, 'colTime'), w: 30 },
+          { key: 'type', label: t(lang, 'colType'), w: 32 },
+        ],
+        prows,
+        { dotKey: 'level' },
+      );
+      y += 4;
+    }
+
+    // ---- Subdomains (alle) ----
+    const subs = audit?.subdomains?.subdomains ?? [];
+    if (subs.length) {
+      y = ensure(doc, y, 24);
+      y = sectionTitle(doc, y, `${t(lang, 'secSubs')} (${subs.length})`, M);
+      const subRows = subs.map((sd) => ({
+        host: sd.host,
+        http: sd.status == null ? '–' : String(sd.status || 'ERR'),
+        server: sd.server ?? '–',
+        level:
+          sd.status == null
+            ? null
+            : !sd.status || sd.status >= 400
+              ? 'danger'
+              : sd.status >= 300
+                ? 'warning'
+                : 'success',
+      }));
+      y = drawTable(
+        doc,
+        y,
+        M,
+        [
+          { key: 'host', label: t(lang, 'colHost'), w: 100 },
+          { key: 'http', label: t(lang, 'colHttp'), w: 24 },
+          { key: 'server', label: t(lang, 'colServer'), w: 58 },
+        ],
+        subRows,
+        { dotKey: 'level' },
+      );
     }
 
     // ---- Fußzeile mit Seitenzahlen ----
@@ -314,7 +492,7 @@ function drawTable(doc, startY, M, cols, rows, { dotKey } = {}) {
     x = M;
     for (const c of cols) {
       doc.setTextColor(...C.navy);
-      const val = String(row[c.key] ?? '');
+      const val = ascii(row[c.key] ?? '');
       doc.text(truncate(doc, val, c.w - 3), x + 2, y + 4.5);
       x += c.w;
     }
@@ -360,9 +538,29 @@ function truncate(doc, text, maxW) {
 
 const fit = truncate;
 
+// jsPDF-Standardfont (Helvetica/WinAnsi) kennt kein — – ≈ … → : durch ASCII ersetzen
+function ascii(s) {
+  return String(s)
+    .replace(/[—–]/g, '-')
+    .replace(/≈/g, '~')
+    .replace(/…/g, '...')
+    .replace(/→/g, '->')
+    .replace(/[""]/g, '"')
+    .replace(/['']/g, "'");
+}
+
 function pathOf(url) {
   try {
     return new URL(url).pathname || '/';
+  } catch {
+    return url;
+  }
+}
+
+function fileNameOf(url) {
+  try {
+    const path = new URL(url).pathname;
+    return path.split('/').filter(Boolean).pop() || path || url;
   } catch {
     return url;
   }
